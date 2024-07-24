@@ -1,0 +1,151 @@
+import tkinter as tk                     
+from tkinter import ttk                 
+from tkinter import messagebox            
+import sqlite3 as sql                    
+  
+
+def add():      
+    tstring = field.get()     
+    if len(tstring) == 0:          
+        messagebox.showinfo('Error', 'Field is Empty.')  
+    else:         
+        tasks.append(tstring)          
+        the_cursor.execute('insert into tasks values (?)', (tstring ,))         
+        lupdate()        
+        field.delete(0, 'end')  
+ 
+def lupdate():    
+    clear_list()      
+    for task in tasks:        
+        listbox.insert('end', task)  
+   
+def dtask():   
+    try:  
+        value = listbox.get(listbox.curselection())  
+        if value in tasks:    
+            tasks.remove(value)   
+            lupdate()  
+            the_cursor.execute('delete from tasks where title = ?', (value,))  
+    except:    
+        messagebox.showinfo('Error', 'No Task Selected. Cannot Delete.')        
+
+def update_task():
+    try:
+        task_index = task_listbox.curselection()[0]
+        new_task = task_entry.get()
+        task_listbox.delete(task_index)
+        task_listbox.insert(task_index, new_task)
+    except:
+        messagebox.showwarning("Warning", "You must select a task to update and enter new text.")
+
+# def d_all_task():    
+#     message_box = messagebox.askyesno('Delete All', 'Are you sure?')     
+#     if message_box == True:         
+#         while(len(tasks) != 0):                
+#             tasks.pop()  
+#         the_cursor.execute('delete from tasks')        
+#         lupdate()  
+    
+def clear_list():    
+    listbox.delete(0, 'end')  
+    
+def close():    
+    print(tasks)    
+    guiWindow.destroy()  
+   
+def retrieve_database():  
+    while(len(tasks) != 0):          
+        tasks.pop()  
+    for row in the_cursor.execute('select title from tasks'):  
+        tasks.append(row[0])  
+  
+  
+if __name__ == "__main__":  
+    guiWindow = tk.Tk()  
+    guiWindow.title("To-Do List  ")    
+    guiWindow.geometry("900x400+50+250")    
+    guiWindow.resizable(0, 0)    
+    guiWindow.configure(bg = "#98fb98")    
+    the_connection = sql.connect('listOfTasks.db')    
+    the_cursor = the_connection.cursor()  
+    the_cursor.execute('create table if not exists tasks (title text)')    
+    tasks = []   
+    header_frame = tk.Frame(guiWindow, bg = "#98fb98")  
+    functions_frame = tk.Frame(guiWindow, bg = "#98fb98")  
+    listbox_frame = tk.Frame(guiWindow, bg = "#98fb98")  
+  
+    header_frame.pack(fill = "both")  
+    functions_frame.pack(side = "right", expand = True, fill = "both")  
+    listbox_frame.pack(side = "left", expand = True, fill = "both")  
+    header_label = ttk.Label(  
+        header_frame,  
+        text = "The To-Do List",  
+        font = ("simple", "40"),  
+        background = "#98fb98",  
+        foreground = "#800000"  
+    )   
+    header_label.pack(padx = 0, pady = 0)  
+    
+    task_label = ttk.Label(  
+        functions_frame,  
+        text = "Enter the Task:",  
+        font = ("Consolas", "20", "bold"),  
+        background = "#98fb98",  
+        foreground = "#000000"  
+    )
+    task_label.place(x = 30, y = 40)  
+    field = ttk.Entry(  
+        functions_frame,  
+        font = ("Consolas", "12"),  
+        width = 45,  
+        background = "#FFF8DC",  
+        foreground = "#A52A2A"  
+    )   
+    field.place(x = 30, y = 80)  
+    add_button = ttk.Button(  
+        functions_frame,  
+        text = "Add Task",  
+        width = 45,  
+        command = add  
+    )  
+    del_button = ttk.Button(  
+        functions_frame,  
+        text = "Delete Task",  
+        width = 45,  
+        command = dtask  
+    ) 
+    update_button = ttk.Button(
+        functions_frame, 
+        text="Update Task",
+        width = 45, 
+        command=update_task
+    )
+     
+    ebutton = ttk.Button(  
+        functions_frame,  
+        text = "Exit",  
+        width = 45,  
+        command = close  
+    )  
+    add_button.place(x = 60, y = 120)  
+    del_button.place(x = 60, y = 160) 
+    update_button.place(x=60, y=200)
+    #del_all_button.place(x = 60, y = 180)  
+    ebutton.place(x = 60, y = 240)  
+    
+    listbox = tk.Listbox(  
+        listbox_frame,  
+        width = 40,  
+        height = 15,  
+        selectmode = 'SINGLE',  
+        background = "#d8bfd8",  
+        foreground = "#000000",  
+        selectbackground = "#CD853F",  
+        selectforeground = "#d8bfd8"  
+    )   
+    listbox.place(x = 100, y = 20)  
+    retrieve_database()  
+    lupdate()   
+    guiWindow.mainloop()  
+    the_connection.commit()  
+    the_cursor.close()  
